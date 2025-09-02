@@ -41,14 +41,14 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		return nil, fiber.ErrBadRequest
 	}
 
-	total, err := c.UserRepository.CountById(tx, request.ID)
+	total, err := c.UserRepository.CountByUserName(tx, request.UserName)
 	if err != nil {
-		c.Log.Warnf("Failed count user from database : %+v", err)
+		c.Log.Warnf("Failed count user from database: %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if total > 0 {
-		c.Log.Warnf("User already exists : %+v", err)
+		c.Log.Warnf("User already exists : %+v", request.UserName)
 		return nil, fiber.ErrConflict
 	}
 
@@ -59,9 +59,9 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	}
 
 	user := &entity.User{
-		ID:       request.ID,
-		Password: string(password),
-		Name:     request.Name,
+		Password:    string(password),
+		Name:        request.Name,
+		PhoneNumber: request.PhoneNumber,
 	}
 
 	if err := c.UserRepository.Create(tx, user); err != nil {

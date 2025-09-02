@@ -17,6 +17,8 @@ func NewUserRepository(log *logrus.Logger) *UserRepository {
 	}
 }
 
-func (r *UserRepository) FindByToken(db *gorm.DB, user *entity.User, token string) error {
-	return db.Where("token = ?", token).First(user).Error
+func (r *UserRepository) CountByUserName(db *gorm.DB, userName string) (int64, error) {
+	var count int64
+	err := db.Model(&entity.User{}).Where("user_name = ?", userName).Count(&count).Error
+	return count, err
 }

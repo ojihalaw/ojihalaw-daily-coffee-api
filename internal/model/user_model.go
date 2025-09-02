@@ -3,8 +3,8 @@ package model
 type UserResponse struct {
 	ID        string `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
-	CreatedAt int64  `json:"created_at,omitempty"`
-	UpdatedAt int64  `json:"updated_at,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }
 
 type LoginUserRequest struct {
@@ -21,7 +21,8 @@ type GetUserRequest struct {
 }
 
 type RegisterUserRequest struct {
-	ID       string `json:"id" validate:"required,max=100"`
-	Password string `json:"password" validate:"required,max=100"`
-	Name     string `json:"name" validate:"required,max=100"`
+	Name        string `json:"name" validate:"required,max=100"`
+	UserName    string `json:"user_name" validate:"required,max=50"`
+	Password    string `json:"password" validate:"required,min=6,max=100"`
+	PhoneNumber string `json:"phone_number" validate:"required,max=20"`
 }

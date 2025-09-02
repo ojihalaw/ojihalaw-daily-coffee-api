@@ -10,6 +10,7 @@ func Run(db *gorm.DB, log *logrus.Logger) {
 	err := db.AutoMigrate(
 		&entity.User{},
 	)
+
 	if err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}

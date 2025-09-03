@@ -3,12 +3,12 @@ package usecase
 import (
 	"context"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/entity"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/model"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/model/converter"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/repository"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -17,16 +17,16 @@ import (
 type UserUseCase struct {
 	DB             *gorm.DB
 	Log            *logrus.Logger
-	Validate       *validator.Validate
+	Validator      *utils.Validator
 	UserRepository *repository.UserRepository
 }
 
-func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
+func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, validator *utils.Validator,
 	userRepository *repository.UserRepository) *UserUseCase {
 	return &UserUseCase{
 		DB:             db,
 		Log:            logger,
-		Validate:       validate,
+		Validator:      validator,
 		UserRepository: userRepository,
 	}
 }
@@ -35,7 +35,7 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	err := c.Validate.Struct(request)
+	err := c.Validator.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
 		return nil, fiber.ErrBadRequest

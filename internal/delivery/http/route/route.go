@@ -6,9 +6,10 @@ import (
 )
 
 type RouteConfig struct {
-	App            *fiber.App
-	UserController *http.UserController
-	AuthMiddleware fiber.Handler
+	App                *fiber.App
+	CustomerController *http.CustomerController
+	UserController     *http.UserController
+	AuthMiddleware     fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
@@ -19,8 +20,7 @@ func (c *RouteConfig) Setup() {
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api/v1")
 	guest := api.Group("/guest")
-	guest.Post("/user/register", c.UserController.Register)
-	c.App.Post("/api/users/register", c.UserController.Register)
+	guest.Post("/users/register", c.CustomerController.Register)
 	// c.App.Post("/api/users/_login", c.UserController.Login)
 }
 

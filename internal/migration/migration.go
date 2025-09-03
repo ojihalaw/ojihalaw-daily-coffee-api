@@ -9,6 +9,7 @@ import (
 func Run(db *gorm.DB, log *logrus.Logger) {
 	err := db.AutoMigrate(
 		&entity.User{},
+		&entity.Customer{},
 	)
 
 	if err != nil {

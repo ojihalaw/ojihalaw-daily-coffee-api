@@ -5,23 +5,24 @@ import (
 
 	"github.com/ojihalawa/daily-coffee-api.git/internal/config"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/migration"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 )
 
 func main() {
 	viperConfig := config.NewViper()
 	log := config.NewLogger(viperConfig)
 	db := config.NewDatabase(viperConfig, log)
-	validate := config.NewValidator(viperConfig)
+	validator := utils.NewValidator(viperConfig)
 	app := config.NewFiber(viperConfig)
 
 	migration.Run(db, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:       db,
-		App:      app,
-		Log:      log,
-		Validate: validate,
-		Config:   viperConfig,
+		DB:        db,
+		App:       app,
+		Log:       log,
+		Validator: validator,
+		Config:    viperConfig,
 	})
 
 	webPort := viperConfig.GetInt("APP_PORT")

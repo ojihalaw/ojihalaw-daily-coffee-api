@@ -8,8 +8,10 @@ import (
 func NewLogger(viper *viper.Viper) *logrus.Logger {
 	log := logrus.New()
 
-	log.SetLevel(logrus.Level(viper.GetInt32("log.level")))
-	log.SetFormatter(&logrus.JSONFormatter{})
+	log.SetLevel(logrus.Level(viper.GetInt32("LOG_LEVEL")))
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
 
 	return log
 }

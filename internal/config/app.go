@@ -29,10 +29,15 @@ func Bootstrap(config *BootstrapConfig) {
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validator, userRepository)
 	userController := http.NewUserController(userUseCase, config.Log)
 
+	categoryRepository := repository.NewCategoryRepository(config.Log)
+	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validator, categoryRepository)
+	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
+
 	routeConfig := route.RouteConfig{
 		App:                config.App,
 		CustomerController: customerController,
 		UserController:     userController,
+		CategoryController: categoryController,
 		// ContactController: contactController,
 		// AddressController: addressController,
 		// AuthMiddleware:    authMiddleware,

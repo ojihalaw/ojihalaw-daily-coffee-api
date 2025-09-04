@@ -1,6 +1,11 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"strings"
+
+	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
+	"gorm.io/gorm"
+)
 
 type Repository[T any] struct {
 	DB *gorm.DB
@@ -26,4 +31,44 @@ func (r *Repository[T]) CountById(db *gorm.DB, id any) (int64, error) {
 
 func (r *Repository[T]) FindById(db *gorm.DB, entity *T, id any) error {
 	return db.Where("id = ?", id).Take(entity).Error
+}
+
+func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T, pagination *utils.PaginationRequest) (int64, error) {
+	var total int64
+
+	query := db.Model(new(T))
+
+	// cek apakah entity implement Searchable
+	if s, ok := any(new(T)).(utils.Searchable); ok && pagination.Search != "" {
+		fields := s.SearchFields()
+		conditions := make([]string, len(fields))
+		args := make([]interface{}, len(fields))
+		for i, f := range fields {
+			conditions[i] = f + " ILIKE ?"
+			args[i] = "%" + pagination.Search + "%"
+		}
+		query = query.Where(strings.Join(conditions, " OR "), args...)
+	}
+
+	// order
+	if pagination.OrderBy != "" {
+		order := pagination.OrderBy
+		if pagination.SortBy != "" {
+			order += " " + pagination.SortBy
+		}
+		query = query.Order(order)
+	}
+
+	// count total data
+	if err := query.Count(&total).Error; err != nil {
+		return 0, err
+	}
+
+	// paging
+	offset := (pagination.Page - 1) * pagination.Limit
+	if err := query.Offset(offset).Limit(pagination.Limit).Find(entities).Error; err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }

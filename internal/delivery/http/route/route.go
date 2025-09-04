@@ -9,17 +9,20 @@ type RouteConfig struct {
 	App                *fiber.App
 	CustomerController *http.CustomerController
 	UserController     *http.UserController
+	CategoryController *http.CategoryController
 	AuthMiddleware     fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
 	c.SetupAuthRoute()
 	c.SetupGuestRoute()
+	c.SetupCMSRoute()
 }
 
 func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api/v1")
 	guest := api.Group("/guest")
+
 	guest.Post("/users/register", c.CustomerController.Register)
 	// c.App.Post("/api/users/_login", c.UserController.Login)
 }
@@ -32,4 +35,13 @@ func (c *RouteConfig) SetupAuthRoute() {
 	// c.App.Patch("/api/users/_current", c.UserController.Update)
 	// c.App.Get("/api/users/_current", c.UserController.Current)
 
+}
+
+func (c *RouteConfig) SetupCMSRoute() {
+	api := c.App.Group("/api/v1")
+	cms := api.Group("/cms")
+
+	category := cms.Group("/categories")
+	category.Post("", c.CategoryController.Create)
+	category.Get("", c.CategoryController.GetAll)
 }

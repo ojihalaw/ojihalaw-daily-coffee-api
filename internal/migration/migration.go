@@ -10,6 +10,9 @@ func Run(db *gorm.DB, log *logrus.Logger) {
 	err := db.AutoMigrate(
 		&entity.User{},
 		&entity.Customer{},
+		&entity.Category{},
+		&entity.Product{},
+		&entity.ProductImage{},
 	)
 
 	if err != nil {

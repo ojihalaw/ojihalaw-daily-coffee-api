@@ -45,6 +45,9 @@ func (c *RouteConfig) SetupCMSRoute() {
 	auth := cms.Group("/auth")
 	auth.Post("/login", c.AuthController.Login)
 
+	user := cms.Group("/users")
+	user.Post("", c.UserController.Create)
+
 	category := cms.Group("/categories")
 	category.Post("", c.CategoryController.Create)
 	category.Get("", c.CategoryController.FindAll)

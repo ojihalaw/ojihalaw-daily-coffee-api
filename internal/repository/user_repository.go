@@ -30,3 +30,9 @@ func (r *UserRepository) FindByEmail(db *gorm.DB, email string) (*entity.User, e
 	}
 	return &u, nil
 }
+
+func (r *UserRepository) ExistsByEmail(db *gorm.DB, email string) (bool, error) {
+	var count int64
+	err := db.Model(&entity.User{}).Where("email = ?", email).Count(&count).Error
+	return count > 0, err
+}

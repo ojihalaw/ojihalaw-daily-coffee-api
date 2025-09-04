@@ -2,11 +2,12 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/go-playground/validator/v10"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/entity"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/model"
-	"github.com/ojihalawa/daily-coffee-api.git/internal/model/converter"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/repository"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -31,48 +32,64 @@ func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, validator *utils.Validat
 	}
 }
 
-func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserRequest) (*model.UserResponse, error) {
+func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserRequest) error {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	err := c.Validator.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+
+			var messages []string
+			for _, e := range validationErrors {
+				messages = append(messages, e.Translate(c.Validator.Translator))
+			}
+			return fmt.Errorf("%w: %s", utils.ErrValidation, strings.Join(messages, ", "))
+		}
+		return fmt.Errorf("%w: %s", utils.ErrValidation, err.Error())
 	}
 
 	total, err := c.UserRepository.CountByUserName(tx, request.UserName)
 	if err != nil {
 		c.Log.Warnf("Failed count user from database: %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
 	}
-
 	if total > 0 {
 		c.Log.Warnf("User already exists : %+v", request.UserName)
-		return nil, fiber.ErrConflict
+		return fmt.Errorf("%w: %s", utils.ErrConflict, "user with username already exists")
+	}
+
+	exists, err := c.UserRepository.ExistsByEmail(tx, request.Email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("%w: %s", utils.ErrConflict, "email already registered")
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.Log.Warnf("Failed to generate bcrype hash : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		c.Log.Warnf("Failed to generate bcrypt hash : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
 	}
 
 	user := &entity.User{
 		Password:    string(password),
 		Name:        request.Name,
+		UserName:    request.UserName,
+		Email:       request.Email,
 		PhoneNumber: request.PhoneNumber,
 	}
 
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed create user to database : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
 	}
 
-	return converter.UserToResponse(user), nil
+	return nil
 }

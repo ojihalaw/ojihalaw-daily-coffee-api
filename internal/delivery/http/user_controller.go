@@ -1,9 +1,12 @@
 package http
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/model"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/usecase"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,20 +22,34 @@ func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger) *Use
 	}
 }
 
-func (c *UserController) Register(ctx *fiber.Ctx) error {
+func (c *UserController) Create(ctx *fiber.Ctx) error {
 	request := new(model.RegisterUserRequest)
 
 	err := ctx.BodyParser(request)
 	if err != nil {
 		c.Log.Warnf("Failed to parse request body : %+v", err)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse(fiber.StatusBadRequest, "Failed to parse request body"))
 	}
 
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	err = c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
-		return err
+
+		switch {
+		case errors.Is(err, utils.ErrValidation):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+
+		case errors.Is(err, utils.ErrConflict):
+			return ctx.Status(fiber.StatusConflict).
+				JSON(utils.ErrorResponse(fiber.StatusConflict, err.Error()))
+
+		default: // internal error
+			return ctx.Status(fiber.StatusInternalServerError).
+				JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+		}
 	}
 
-	return ctx.JSON(model.WebResponse[*model.UserResponse]{Data: response})
+	return ctx.Status(fiber.StatusCreated).
+		JSON(utils.DefaultSuccessResponse(fiber.StatusCreated, "user created successfully"))
 }

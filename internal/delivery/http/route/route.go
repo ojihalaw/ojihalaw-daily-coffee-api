@@ -45,4 +45,6 @@ func (c *RouteConfig) SetupCMSRoute() {
 	category.Post("", c.CategoryController.Create)
 	category.Get("", c.CategoryController.FindAll)
 	category.Get(":id", c.CategoryController.FindByID)
+	category.Put(":id", c.CategoryController.Update)
+	category.Delete(":id", c.CategoryController.Delete)
 }

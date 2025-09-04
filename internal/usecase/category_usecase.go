@@ -125,3 +125,86 @@ func (c *CategoryUseCase) FindByID(ctx context.Context, categoryID string) (*mod
 
 	return converter.CategoryToResponse(category), nil
 }
+
+func (c *CategoryUseCase) Update(ctx context.Context, categoryID string, request *model.UpdateCategoryRequest) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	category := &entity.Category{}
+	_, err := c.CategoryRepository.FindById(c.DB.WithContext(ctx), category, categoryID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("Category not found, id=%s", categoryID)
+			return utils.ErrNotFound
+		}
+		c.Log.Warnf("Failed find category from database : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	err = c.Validator.Validate.Struct(request)
+	if err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+
+			var messages []string
+			for _, e := range validationErrors {
+				messages = append(messages, e.Translate(c.Validator.Translator))
+			}
+			return fmt.Errorf("%w: %s", utils.ErrValidation, strings.Join(messages, ", "))
+		}
+		return fmt.Errorf("%w: %s", utils.ErrValidation, err.Error())
+	}
+
+	// check duplicate
+	exists, err := c.CategoryRepository.ExistsByName(c.DB.WithContext(ctx), request.Name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("%w: %s", utils.ErrConflict, "category name already exist")
+	}
+
+	slug := utils.GenerateSlug(request.Name)
+
+	category.Name = request.Name
+	category.Slug = slug
+
+	err = c.CategoryRepository.Update(c.DB.WithContext(ctx), category)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("Category not found, id=%s", categoryID)
+			return utils.ErrNotFound
+		}
+		c.Log.Warnf("Failed find category from database : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	return nil
+}
+
+func (c *CategoryUseCase) Delete(ctx context.Context, categoryID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	category := &entity.Category{}
+	_, err := c.CategoryRepository.FindById(c.DB.WithContext(ctx), category, categoryID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("Category not found, id=%s", categoryID)
+			return utils.ErrNotFound
+		}
+		c.Log.Warnf("Failed find category from database : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	err = c.CategoryRepository.Delete(c.DB.WithContext(ctx), category)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("Category not found, id=%s", categoryID)
+			return utils.ErrNotFound
+		}
+		c.Log.Warnf("Failed find category from database : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	return nil
+}

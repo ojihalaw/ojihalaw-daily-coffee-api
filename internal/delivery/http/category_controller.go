@@ -90,3 +90,46 @@ func (c *CategoryController) FindByID(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).
 		JSON(utils.SuccessResponse(fiber.StatusOK, "get detail category successfully", category))
 }
+
+func (c *CategoryController) Update(ctx *fiber.Ctx) error {
+	request := new(model.UpdateCategoryRequest)
+	id := ctx.Params("id")
+
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse(fiber.StatusBadRequest, "Failed to parse request body"))
+	}
+
+	err = c.UseCase.Update(ctx.Context(), id, request)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			return ctx.Status(fiber.StatusNotFound).
+				JSON(utils.ErrorResponse(fiber.StatusNotFound, "category not found"))
+		}
+
+		return ctx.Status(fiber.StatusInternalServerError).
+			JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "delete category successfully"))
+}
+
+func (c *CategoryController) Delete(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+
+	err := c.UseCase.Delete(ctx.Context(), id)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			return ctx.Status(fiber.StatusNotFound).
+				JSON(utils.ErrorResponse(fiber.StatusNotFound, "category not found"))
+		}
+
+		return ctx.Status(fiber.StatusInternalServerError).
+			JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "update category successfully"))
+}

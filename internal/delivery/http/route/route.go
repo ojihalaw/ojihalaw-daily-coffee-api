@@ -10,6 +10,7 @@ type RouteConfig struct {
 	CustomerController *http.CustomerController
 	UserController     *http.UserController
 	CategoryController *http.CategoryController
+	AuthController     *http.AuthController
 	AuthMiddleware     fiber.Handler
 }
 
@@ -40,6 +41,9 @@ func (c *RouteConfig) SetupAuthRoute() {
 func (c *RouteConfig) SetupCMSRoute() {
 	api := c.App.Group("/api/v1")
 	cms := api.Group("/cms")
+
+	auth := cms.Group("/auth")
+	auth.Post("/login", c.AuthController.Login)
 
 	category := cms.Group("/categories")
 	category.Post("", c.CategoryController.Create)

@@ -6,6 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type Role string
+
+const (
+	RoleAdmin   Role = "admin"
+	RoleUser    Role = "user"
+	RoleFinance Role = "finance"
+)
+
 type User struct {
 	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Name        string    `gorm:"size:100;not null"`
@@ -13,12 +21,8 @@ type User struct {
 	Email       string    `gorm:"size:50;unique;not null"`
 	Password    string    `gorm:"not null"`
 	PhoneNumber string    `gorm:"column:phone_number;size:20"`
-	Role        string    `gorm:"size:20;default:customer"`
+	Role        Role      `gorm:"type:varchar(20);not null;default:'user'"`
 	Status      string    `gorm:"size:20;default:active"`
-	Address     string    `gorm:"size:255"`
-	Addresses   string    `gorm:"size:255"`
-	City        string    `gorm:"size:100"`
-	PostalCode  string    `gorm:"size:10"`
 	CreatedAt   time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }

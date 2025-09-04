@@ -22,3 +22,11 @@ func (r *UserRepository) CountByUserName(db *gorm.DB, userName string) (int64, e
 	err := db.Model(&entity.User{}).Where("user_name = ?", userName).Count(&count).Error
 	return count, err
 }
+
+func (r *UserRepository) FindByEmail(db *gorm.DB, email string) (*entity.User, error) {
+	var u entity.User
+	if err := db.Where("email = ?", email).Take(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -74,7 +75,7 @@ func (c *CategoryUseCase) Create(ctx context.Context, request *model.CreateCateg
 	return nil
 }
 
-func (c *CategoryUseCase) GetAll(ctx context.Context, pagination *utils.PaginationRequest) ([]model.CategoryResponse, *utils.PaginationResponse, error) {
+func (c *CategoryUseCase) FindAll(ctx context.Context, pagination *utils.PaginationRequest) ([]model.CategoryResponse, *utils.PaginationResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -104,4 +105,23 @@ func (c *CategoryUseCase) GetAll(ctx context.Context, pagination *utils.Paginati
 	}
 
 	return responses, paginationRes, nil
+}
+
+func (c *CategoryUseCase) FindByID(ctx context.Context, categoryID string) (*model.CategoryResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var categories *entity.Category
+
+	category, err := c.CategoryRepository.FindById(c.DB.WithContext(ctx), categories, categoryID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("Category not found, id=%s", categoryID)
+			return nil, utils.ErrNotFound
+		}
+		c.Log.Warnf("Failed find category from database : %+v", err)
+		return nil, fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	return converter.CategoryToResponse(category), nil
 }

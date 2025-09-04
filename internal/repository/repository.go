@@ -29,8 +29,12 @@ func (r *Repository[T]) CountById(db *gorm.DB, id any) (int64, error) {
 	return total, err
 }
 
-func (r *Repository[T]) FindById(db *gorm.DB, entity *T, id any) error {
-	return db.Where("id = ?", id).Take(entity).Error
+func (r *Repository[T]) FindById(db *gorm.DB, entity *T, id any) (*T, error) {
+	if err := db.Where("id = ?", id).Take(&entity).Error; err != nil {
+		return nil, err
+	}
+	return entity, nil
+
 }
 
 func (r *Repository[T]) FindAll(db *gorm.DB, entities *[]T, pagination *utils.PaginationRequest) (int64, error) {

@@ -54,7 +54,7 @@ func (c *CategoryController) Create(ctx *fiber.Ctx) error {
 		JSON(utils.DefaultSuccessResponse(fiber.StatusCreated, "category created successfully"))
 }
 
-func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
+func (c *CategoryController) FindAll(ctx *fiber.Ctx) error {
 	req := &utils.PaginationRequest{
 		Page:    ctx.QueryInt("page", 1),
 		Limit:   ctx.QueryInt("limit", 10),
@@ -63,7 +63,7 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 		Search:  ctx.Query("search", ""),
 	}
 
-	categories, pagination, err := c.UseCase.GetAll(ctx.Context(), req)
+	categories, pagination, err := c.UseCase.FindAll(ctx.Context(), req)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).
 			JSON(utils.ErrorResponse(fiber.StatusInternalServerError, err.Error()))
@@ -71,4 +71,22 @@ func (c *CategoryController) GetAll(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).
 		JSON(utils.SuccessResponseWithPagination(fiber.StatusOK, "get list category successfully", categories, pagination))
+}
+
+func (c *CategoryController) FindByID(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+
+	category, err := c.UseCase.FindByID(ctx.Context(), id)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			return ctx.Status(fiber.StatusNotFound).
+				JSON(utils.ErrorResponse(fiber.StatusNotFound, "category not found"))
+		}
+
+		return ctx.Status(fiber.StatusInternalServerError).
+			JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.SuccessResponse(fiber.StatusOK, "get detail category successfully", category))
 }

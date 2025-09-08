@@ -12,7 +12,6 @@ func Run(db *gorm.DB, log *logrus.Logger) {
 		&entity.Customer{},
 		&entity.Category{},
 		&entity.Product{},
-		&entity.ProductImage{},
 		&entity.RefreshSession{},
 	)
 

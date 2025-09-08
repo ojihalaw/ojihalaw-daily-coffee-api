@@ -42,6 +42,12 @@ func (a *AuthController) Login(ctx *fiber.Ctx) error {
 		case errors.Is(err, utils.ErrUnauthorized):
 			return ctx.Status(fiber.StatusUnauthorized).
 				JSON(utils.ErrorResponse(fiber.StatusUnauthorized, err.Error()))
+		case errors.Is(err, utils.ErrInvalidPassword):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+		case errors.Is(err, utils.ErrInvalidEmail):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
 
 		default:
 			return ctx.Status(fiber.StatusInternalServerError).

@@ -14,6 +14,7 @@ func main() {
 	db := config.NewDatabase(viperConfig, log)
 	validator := utils.NewValidator(viperConfig)
 	app := config.NewFiber(viperConfig)
+	jwtMaker := utils.NewJWTMaker(viperConfig)
 
 	migration.Run(db, log)
 
@@ -23,6 +24,7 @@ func main() {
 		Log:       log,
 		Validator: validator,
 		Config:    viperConfig,
+		JWTMaker:  jwtMaker,
 	})
 
 	webPort := viperConfig.GetInt("APP_PORT")

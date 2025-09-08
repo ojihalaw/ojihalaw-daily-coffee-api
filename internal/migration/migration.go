@@ -13,6 +13,7 @@ func Run(db *gorm.DB, log *logrus.Logger) {
 		&entity.Category{},
 		&entity.Product{},
 		&entity.ProductImage{},
+		&entity.RefreshSession{},
 	)
 
 	if err != nil {

@@ -23,13 +23,14 @@ type AuthUseCase struct {
 	DB        *gorm.DB
 	Log       *logrus.Logger
 	Validator *utils.Validator
+	JWT       *utils.JWTMaker
 	UserRepo  *repository.UserRepository
 	SessRepo  *repository.RefreshRepository
-	JWT       *utils.JWTMaker
 }
 
-func NewAuthUseCase(db *gorm.DB, logger *logrus.Logger, validator *utils.Validator,
-	userRepository *repository.UserRepository, sessRepository *repository.RefreshRepository, jwt *utils.JWTMaker) *AuthUseCase {
+func NewAuthUseCase(
+	db *gorm.DB, logger *logrus.Logger, validator *utils.Validator, jwt *utils.JWTMaker,
+	userRepository *repository.UserRepository, sessRepository *repository.RefreshRepository) *AuthUseCase {
 	return &AuthUseCase{
 		DB:        db,
 		Log:       logger,
@@ -69,14 +70,14 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.Log.Infof("user not found, id=%s", request.Email)
-			return nil, utils.ErrNotFound
+			return nil, utils.ErrInvalidEmail
 		}
 		c.Log.Warnf("Failed find user from database : %+v", err)
 		return nil, fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)) != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, utils.ErrInvalidPassword
 	}
 
 	jti, err := randJTI()
@@ -88,17 +89,20 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip
 	sess := &entity.RefreshSession{
 		UserID: user.ID, JTI: jti,
 		ExpiresAt: now.Add(c.JWT.RefreshTTL),
-		IP:        ip, UserAgent: ua,
+		IP:        ip,
+		UserAgent: ua,
 	}
+
 	if err := c.SessRepo.Create(c.DB.WithContext(ctx), sess); err != nil {
 		return nil, err
 	}
 
-	access, exp, err := c.JWT.NewAccessToken(user.ID.String(), string(user.Role), now)
+	access, accessExp, err := c.JWT.NewAccessToken(user.ID.String(), string(user.Role), now)
 	if err != nil {
 		return nil, err
 	}
-	refresh, _, err := c.JWT.NewRefreshToken(user.ID.String(), jti, now)
+
+	refresh, refreshExp, err := c.JWT.NewRefreshToken(user.ID.String(), jti, now)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +110,7 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip
 	return &model.TokenResponse{
 		AccessToken:      access,
 		RefreshToken:     refresh,
-		AccessExpiresIn:  int64(time.Until(exp).Seconds()),
-		RefreshExpiresIn: int64(time.Until(exp).Seconds()),
+		AccessExpiresIn:  int64(time.Until(accessExp).Seconds()),
+		RefreshExpiresIn: int64(time.Until(refreshExp).Seconds()),
 	}, nil
 }

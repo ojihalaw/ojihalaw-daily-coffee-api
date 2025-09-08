@@ -4,12 +4,14 @@ import "errors"
 
 var (
 	// Client errors
-	ErrValidation     = errors.New("validation failed") // input tidak valid
-	ErrUnauthorized   = errors.New("unauthorized")      // tidak ada login / token invalid
-	ErrForbidden      = errors.New("forbidden")         // tidak punya akses
-	ErrNotFound       = errors.New("data not found")    // resource tidak ditemukan
-	ErrConflict       = errors.New("conflict")          // sudah ada (duplicate)
-	ErrTooManyRequest = errors.New("too many requests") // rate limit / throttle
+	ErrValidation      = errors.New("validation failed") // input tidak valid
+	ErrUnauthorized    = errors.New("unauthorized")      // tidak ada login / token invalid
+	ErrForbidden       = errors.New("forbidden")         // tidak punya akses
+	ErrNotFound        = errors.New("data not found")    // resource tidak ditemukan
+	ErrConflict        = errors.New("conflict")          // sudah ada (duplicate)
+	ErrTooManyRequest  = errors.New("too many requests") // rate limit / throttle
+	ErrInvalidPassword = errors.New("invalid password")  // rate limit / throttle
+	ErrInvalidEmail    = errors.New("invalid email")     // rate limit / throttle
 
 	// Server errors
 	ErrInternal    = errors.New("internal server error") // kesalahan server

@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http/middleware"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http/route"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/repository"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/usecase"
@@ -18,6 +19,7 @@ type BootstrapConfig struct {
 	Log       *logrus.Logger
 	Validator *utils.Validator
 	Config    *viper.Viper
+	JWTMaker  *utils.JWTMaker
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -29,18 +31,23 @@ func Bootstrap(config *BootstrapConfig) {
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validator, userRepository)
 	userController := http.NewUserController(userUseCase, config.Log)
 
+	sessionRepository := repository.NewRefreshRepository(config.Log)
+	authUseCase := usecase.NewAuthUseCase(config.DB, config.Log, config.Validator, config.JWTMaker, userRepository, sessionRepository)
+	authController := http.NewAuthController(authUseCase, config.Log)
+
 	categoryRepository := repository.NewCategoryRepository(config.Log)
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validator, categoryRepository)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
+
+	authMiddleware := middleware.AuthMiddleware(config.JWTMaker)
 
 	routeConfig := route.RouteConfig{
 		App:                config.App,
 		CustomerController: customerController,
 		UserController:     userController,
 		CategoryController: categoryController,
-		// ContactController: contactController,
-		// AddressController: addressController,
-		// AuthMiddleware:    authMiddleware,
+		AuthController:     authController,
+		AuthMiddleware:     authMiddleware,
 	}
 	routeConfig.Setup()
 }

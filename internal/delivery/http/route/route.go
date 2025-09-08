@@ -45,6 +45,7 @@ func (c *RouteConfig) SetupCMSRoute() {
 	auth := cms.Group("/auth")
 	auth.Post("/login", c.AuthController.Login)
 
+	c.App.Use(c.AuthMiddleware)
 	user := cms.Group("/users")
 	user.Post("", c.UserController.Create)
 

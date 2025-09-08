@@ -113,7 +113,7 @@ func (c *CategoryController) Update(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).
-		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "delete category successfully"))
+		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "update category successfully"))
 }
 
 func (c *CategoryController) Delete(ctx *fiber.Ctx) error {

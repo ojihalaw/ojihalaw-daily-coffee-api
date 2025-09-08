@@ -48,6 +48,10 @@ func (c *RouteConfig) SetupCMSRoute() {
 	c.App.Use(c.AuthMiddleware)
 	user := cms.Group("/users")
 	user.Post("", c.UserController.Create)
+	user.Get("", c.UserController.FindAll)
+	user.Get(":id", c.UserController.FindByID)
+	user.Put(":id", c.UserController.Update)
+	user.Delete(":id", c.UserController.Delete)
 
 	category := cms.Group("/categories")
 	category.Post("", c.CategoryController.Create)

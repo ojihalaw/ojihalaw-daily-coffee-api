@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http/middleware"
@@ -14,12 +15,13 @@ import (
 )
 
 type BootstrapConfig struct {
-	DB        *gorm.DB
-	App       *fiber.App
-	Log       *logrus.Logger
-	Validator *utils.Validator
-	Config    *viper.Viper
-	JWTMaker  *utils.JWTMaker
+	DB         *gorm.DB
+	App        *fiber.App
+	Log        *logrus.Logger
+	Validator  *utils.Validator
+	Config     *viper.Viper
+	JWTMaker   *utils.JWTMaker
+	Cloudinary *cloudinary.Cloudinary
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -39,15 +41,20 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validator, categoryRepository)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 
+	productRepository := repository.NewProductRepository(config.Log)
+	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validator, config.Cloudinary, productRepository)
+	productController := http.NewProductController(productUseCase, config.Log)
+
 	authMiddleware := middleware.AuthMiddleware(config.JWTMaker)
 
 	routeConfig := route.RouteConfig{
 		App:                config.App,
+		AuthController:     authController,
+		AuthMiddleware:     authMiddleware,
 		CustomerController: customerController,
 		UserController:     userController,
 		CategoryController: categoryController,
-		AuthController:     authController,
-		AuthMiddleware:     authMiddleware,
+		ProductController:  productController,
 	}
 	routeConfig.Setup()
 }

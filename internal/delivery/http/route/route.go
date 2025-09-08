@@ -7,10 +7,11 @@ import (
 
 type RouteConfig struct {
 	App                *fiber.App
+	AuthController     *http.AuthController
 	CustomerController *http.CustomerController
 	UserController     *http.UserController
 	CategoryController *http.CategoryController
-	AuthController     *http.AuthController
+	ProductController  *http.ProductController
 	AuthMiddleware     fiber.Handler
 }
 
@@ -59,4 +60,11 @@ func (c *RouteConfig) SetupCMSRoute() {
 	category.Get(":id", c.CategoryController.FindByID)
 	category.Put(":id", c.CategoryController.Update)
 	category.Delete(":id", c.CategoryController.Delete)
+
+	product := cms.Group("/products")
+	product.Post("", c.ProductController.Create)
+	product.Get("", c.ProductController.FindAll)
+	product.Get(":id", c.ProductController.FindByID)
+	product.Put(":id", c.ProductController.Update)
+	product.Delete(":id", c.ProductController.Delete)
 }

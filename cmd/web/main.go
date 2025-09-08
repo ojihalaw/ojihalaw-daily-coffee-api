@@ -15,16 +15,18 @@ func main() {
 	validator := utils.NewValidator(viperConfig)
 	app := config.NewFiber(viperConfig)
 	jwtMaker := utils.NewJWTMaker(viperConfig)
+	cloudinary := config.NewCloudinary(viperConfig)
 
 	migration.Run(db, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:        db,
-		App:       app,
-		Log:       log,
-		Validator: validator,
-		Config:    viperConfig,
-		JWTMaker:  jwtMaker,
+		DB:         db,
+		App:        app,
+		Log:        log,
+		Validator:  validator,
+		Config:     viperConfig,
+		JWTMaker:   jwtMaker,
+		Cloudinary: cloudinary,
 	})
 
 	webPort := viperConfig.GetInt("APP_PORT")

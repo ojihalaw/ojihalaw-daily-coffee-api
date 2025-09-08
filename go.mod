@@ -5,7 +5,13 @@ go 1.23.3
 require gorm.io/driver/postgres v1.6.0
 
 require (
+	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/gorilla/schema v1.4.1 // indirect
+)
+
+require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/cloudinary/cloudinary-go/v2 v2.13.0
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

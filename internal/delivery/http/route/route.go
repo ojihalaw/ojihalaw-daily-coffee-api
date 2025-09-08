@@ -67,4 +67,6 @@ func (c *RouteConfig) SetupCMSRoute() {
 	product.Get(":id", c.ProductController.FindByID)
 	product.Put(":id", c.ProductController.Update)
 	product.Delete(":id", c.ProductController.Delete)
+	product.Get("/product/special", c.ProductController.FindSpecialProduct)
+	product.Put("/product/special", c.ProductController.UpdateSpecialProduct)
 }

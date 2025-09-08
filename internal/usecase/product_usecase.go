@@ -247,3 +247,70 @@ func (p *ProductUseCase) Delete(ctx context.Context, productID string) error {
 
 	return nil
 }
+
+func (p *ProductUseCase) FindSpecialProduct(ctx context.Context) (*model.ProductResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	product, err := p.ProductRepository.FindSpecialProduct(p.DB.WithContext(ctx))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.Log.Infof("product special is empty")
+			return nil, fmt.Errorf("%w: %s", utils.ErrNotFound, err.Error())
+		}
+		p.Log.Warnf("Failed find special product from database : %+v", err)
+		return nil, fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	return converter.ProductToResponse(product), nil
+}
+
+func (p *ProductUseCase) SetSpecialProduct(ctx context.Context, request *model.UpdateSpecialProductRequest) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := p.Validator.Validate.Struct(request)
+	if err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+
+			var messages []string
+			for _, e := range validationErrors {
+				messages = append(messages, e.Translate(p.Validator.Translator))
+			}
+			return fmt.Errorf("%w: %s", utils.ErrValidation, strings.Join(messages, ", "))
+		}
+		return fmt.Errorf("%w: %s", utils.ErrValidation, err.Error())
+	}
+
+	products := &entity.Product{}
+	product, err := p.ProductRepository.FindById(p.DB.WithContext(ctx), products, request.ProductID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.Log.Infof("product not found")
+			return fmt.Errorf("%w: %s", utils.ErrNotFound, err.Error())
+		}
+		p.Log.Warnf("Failed find product from database : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	prevSpecialProduct, err := p.ProductRepository.FindSpecialProduct(p.DB.WithContext(ctx))
+	if err == nil && prevSpecialProduct != nil {
+		prevSpecialProduct.IsSpecial = false
+		if err := p.ProductRepository.Update(p.DB.WithContext(ctx), prevSpecialProduct); err != nil {
+			return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+		}
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	product.IsSpecial = request.IsSpecial
+	if err := p.ProductRepository.Update(p.DB.WithContext(ctx), product); err != nil {
+		p.Log.Warnf("Failed update special product : %+v", err)
+		return fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	prevSpecialProduct.IsSpecial = false
+	product.IsSpecial = request.IsSpecial
+
+	return nil
+}

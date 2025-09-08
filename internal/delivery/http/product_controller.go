@@ -195,3 +195,51 @@ func (c *ProductController) Delete(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).
 		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "delete product successfully"))
 }
+
+func (c *ProductController) FindSpecialProduct(ctx *fiber.Ctx) error {
+	product, err := c.UseCase.FindSpecialProduct(ctx.Context())
+	if err != nil {
+		switch {
+		case errors.Is(err, utils.ErrValidation):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+
+		case errors.Is(err, utils.ErrNotFound):
+			return ctx.Status(fiber.StatusNotFound).
+				JSON(utils.ErrorResponse(fiber.StatusNotFound, err.Error()))
+
+		default: // internal error
+			return ctx.Status(fiber.StatusInternalServerError).
+				JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+		}
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.SuccessResponse(fiber.StatusOK, "get special product successfully", product))
+}
+
+func (c *ProductController) UpdateSpecialProduct(ctx *fiber.Ctx) error {
+	request := new(model.UpdateSpecialProductRequest)
+
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse(fiber.StatusBadRequest, "Failed to parse request body"))
+	}
+
+	err = c.UseCase.SetSpecialProduct(ctx.Context(), request)
+	if err != nil {
+		switch {
+		case errors.Is(err, utils.ErrValidation):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+
+		default: // internal error
+			return ctx.Status(fiber.StatusInternalServerError).
+				JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+		}
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.DefaultSuccessResponse(fiber.StatusOK, "update special product successfully"))
+}

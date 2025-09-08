@@ -40,3 +40,8 @@ type UpdateProductRequest struct {
 	ImageURL    string    `json:"image_url"`
 	CategoryID  uuid.UUID `json:"category_id" validate:"required"`
 }
+
+type UpdateSpecialProductRequest struct {
+	ProductID uuid.UUID `json:"product_id" validate:"required"`
+	IsSpecial bool      `json:"is_special"`
+}

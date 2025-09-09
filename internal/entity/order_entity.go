@@ -25,6 +25,8 @@ type Order struct {
 	TransactionID string       `gorm:"size:100"`                           // dari Midtrans
 	RedirectURL   string       `gorm:"size:255"`                           // kalau pakai Snap
 	ExpiredAt     *time.Time   `gorm:"default:null"`
+	Notes         string       `gorm:"size:255"`
+	ShippingAddr  string       `gorm:"size:255"`
 	OrderItems    []OrderItem  `gorm:"foreignKey:OrderID"`
 	PaymentLogs   []PaymentLog `gorm:"foreignKey:OrderID"`
 	CreatedAt     time.Time

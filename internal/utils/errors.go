@@ -17,4 +17,13 @@ var (
 	ErrInternal    = errors.New("internal server error") // kesalahan server
 	ErrUnavailable = errors.New("service unavailable")   // service down / maintenance
 	ErrTimeout     = errors.New("request timeout")       // koneksi lama / gagal
+
+	// Payment / third-party errors
+	ErrPayment          = errors.New("payment error")           // general payment error
+	ErrPaymentDeclined  = errors.New("payment declined")        // ditolak oleh provider
+	ErrPaymentExpired   = errors.New("payment expired")         // sudah lewat waktu bayar
+	ErrPaymentCancelled = errors.New("payment cancelled")       // dibatalkan user / sistem
+	ErrPaymentPending   = errors.New("payment pending")         // masih menunggu pembayaran
+	ErrIntegration      = errors.New("integration error")       // error komunikasi dengan 3rd party
+	ErrInvalidSignature = errors.New("invalid signature error") // signature tidak cocok (security)
 )

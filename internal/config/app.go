@@ -48,7 +48,7 @@ func Bootstrap(config *BootstrapConfig) {
 	productController := http.NewProductController(productUseCase, config.Log)
 
 	orderRepository := repository.NewOrderRepository(config.Log)
-	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validator, orderRepository)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validator, orderRepository, config.Midtrans)
 	orderController := http.NewOrderController(orderUseCase, config.Log)
 
 	authMiddleware := middleware.AuthMiddleware(config.JWTMaker)

@@ -36,20 +36,27 @@ A backend project built with **Go** using modern tools, libraries and **Clean Ar
 ## 📦 Project Structure
 
 .
-├── cmd/ # Entry point
-├── config/ # Configuration (Viper)
-├── internal/
-│ ├── entity/ # Core entities
-│ ├── model/ # Database models
-│ ├── repository/ # Database access
-│ ├── service/ # Business logic
-│ └── handler/ # HTTP handlers
-├── middleware/ # Fiber middlewares
-├── routes/ # Route definitions
-├── utils/ # Helper functions (e.g., validator, cloudinary)
-└── main.go # Application entry point
-
-
+cmd/                  # Entry point for the application
+internal/
+├─ config/            # Configuration (Viper, Gorm, Logger, etc)
+├─ delivery/
+│  ├─ http/           # HTTP handlers / controllers
+│  │  ├─ auth_controller.go
+│  │  ├─ category_controller.go
+│  │  ├─ customer_controller.go
+│  │  ├─ order_controller.go
+│  │  ├─ product_controller.go
+│  │  ├─ user_controller.go
+│  │  └─ route/       # API route definitions
+├─ middleware/        # Custom middlewares (e.g., auth)
+├─ entity/            # Core entities / domain models
+├─ migration/         # Database migrations
+├─ model/             # Database models
+│  └─ converter/      # Model converters
+├─ repository/        # Database repository layer
+├─ service/           # Business logic / service layer
+├─ usecase/           # Application use cases
+└─ utils/             # Utilities (e.g., validator, cloudinary helpers)
 
 ---
 
@@ -76,7 +83,7 @@ cp .env_example .env
 
 4. Run the project
 ```bash
-go run main.go
+go run cmd/web/main.go
 ```
 
 ## 🔑 Authentication

@@ -73,4 +73,11 @@ func (c *RouteConfig) SetupCMSRoute() {
 	product.Delete(":id", c.ProductController.Delete)
 	product.Get("/product/special", c.ProductController.FindSpecialProduct)
 	product.Put("/product/special", c.ProductController.UpdateSpecialProduct)
+
+	customer := cms.Group("/customers")
+	customer.Post("", c.CustomerController.Register)
+	customer.Get("", c.CustomerController.FindAll)
+	customer.Get(":id", c.CustomerController.FindByID)
+	customer.Put(":id", c.CustomerController.Update)
+	customer.Delete(":id", c.CustomerController.Delete)
 }

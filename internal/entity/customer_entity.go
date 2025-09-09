@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+func (Customer) SearchFields() []string {
+	return []string{"name", "user_name"}
+}
+
 type Customer struct {
 	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Name        string    `gorm:"size:100;not null"`

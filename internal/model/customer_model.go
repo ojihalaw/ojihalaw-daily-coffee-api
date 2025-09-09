@@ -1,10 +1,15 @@
 package model
 
 type CustomerResponse struct {
-	ID        string `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
-	UpdatedAt string `json:"updated_at,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	UserName    string `json:"user_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Role        string `json:"role"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at,omitempty"`
+	UpdatedAt   string `json:"updated_at,omitempty"`
 }
 
 type LoginCustomerRequest struct {
@@ -26,4 +31,12 @@ type RegisterCustomerRequest struct {
 	Email       string `json:"email" validate:"required,max=50"`
 	Password    string `json:"password" validate:"required,min=6,max=100"`
 	PhoneNumber string `json:"phone_number" validate:"required,max=20"`
+}
+
+type UpdateCustomerRequest struct {
+	Name        string `json:"name"`
+	UserName    string `json:"user_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Role        string `json:"role" `
 }

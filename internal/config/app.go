@@ -7,6 +7,7 @@ import (
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http/middleware"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/delivery/http/route"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/repository"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/service"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/usecase"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -22,6 +23,7 @@ type BootstrapConfig struct {
 	Config     *viper.Viper
 	JWTMaker   *utils.JWTMaker
 	Cloudinary *cloudinary.Cloudinary
+	Midtrans   *service.MidtransService
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -45,6 +47,10 @@ func Bootstrap(config *BootstrapConfig) {
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validator, config.Cloudinary, productRepository)
 	productController := http.NewProductController(productUseCase, config.Log)
 
+	orderRepository := repository.NewOrderRepository(config.Log)
+	orderUseCase := usecase.NewOrderUseCase(config.DB, config.Log, config.Validator, orderRepository)
+	orderController := http.NewOrderController(orderUseCase, config.Log)
+
 	authMiddleware := middleware.AuthMiddleware(config.JWTMaker)
 
 	routeConfig := route.RouteConfig{
@@ -55,6 +61,7 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController:     userController,
 		CategoryController: categoryController,
 		ProductController:  productController,
+		OrderController:    orderController,
 	}
 	routeConfig.Setup()
 }

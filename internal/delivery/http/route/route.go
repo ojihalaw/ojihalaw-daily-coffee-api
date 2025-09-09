@@ -12,6 +12,7 @@ type RouteConfig struct {
 	UserController     *http.UserController
 	CategoryController *http.CategoryController
 	ProductController  *http.ProductController
+	OrderController    *http.OrderController
 	AuthMiddleware     fiber.Handler
 }
 
@@ -27,6 +28,9 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	guest.Post("/users/register", c.CustomerController.Register)
 	// c.App.Post("/api/users/_login", c.UserController.Login)
+
+	order := guest.Group("/orders")
+	order.Post("", c.OrderController.Create)
 }
 
 func (c *RouteConfig) SetupAuthRoute() {

@@ -5,8 +5,12 @@ go 1.23.3
 require gorm.io/driver/postgres v1.6.0
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
+	github.com/midtrans/midtrans-go v1.3.8 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 )
 
 require (
@@ -53,5 +57,6 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/datatypes v1.2.6
 	gorm.io/gorm v1.30.2 // indirect
 )

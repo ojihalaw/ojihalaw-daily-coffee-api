@@ -5,6 +5,7 @@ import (
 
 	"github.com/ojihalawa/daily-coffee-api.git/internal/config"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/migration"
+	"github.com/ojihalawa/daily-coffee-api.git/internal/service"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
 )
 
@@ -16,6 +17,8 @@ func main() {
 	app := config.NewFiber(viperConfig)
 	jwtMaker := utils.NewJWTMaker(viperConfig)
 	cloudinary := config.NewCloudinary(viperConfig)
+	midClient := config.NewMidtransClient(viperConfig)
+	midtransService := service.NewMidtransService(midClient)
 
 	migration.Run(db, log)
 
@@ -27,6 +30,7 @@ func main() {
 		Config:     viperConfig,
 		JWTMaker:   jwtMaker,
 		Cloudinary: cloudinary,
+		Midtrans:   midtransService,
 	})
 
 	webPort := viperConfig.GetInt("APP_PORT")

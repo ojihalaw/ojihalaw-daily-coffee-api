@@ -57,7 +57,7 @@ A backend project built with **Go** using modern tools, libraries and **Clean Ar
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/project-name.git
+git clone https://github.com/ojihalaw/ojihalaw-daily-coffee-api.git
 cd project-name
 ```
 

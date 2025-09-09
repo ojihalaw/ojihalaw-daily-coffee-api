@@ -26,21 +26,17 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api/v1")
 	guest := api.Group("/guest")
 
-	guest.Post("/users/register", c.CustomerController.Register)
-	// c.App.Post("/api/users/_login", c.UserController.Login)
-
 	order := guest.Group("/orders")
 	order.Post("", c.OrderController.Create)
 }
 
 func (c *RouteConfig) SetupAuthRoute() {
-	// c.App.Use(c.AuthMiddleware)
-	// api := c.App.Group("/api/v1")
-	// auth := api.Group("", c.AuthMiddleware)
-	// c.App.Delete("/api/users", c.UserController.Logout)
-	// c.App.Patch("/api/users/_current", c.UserController.Update)
-	// c.App.Get("/api/users/_current", c.UserController.Current)
+	api := c.App.Group("/api/v1")
+	guest := api.Group("/guest")
 
+	auth := guest.Group("/auth")
+	auth.Post("/register", c.CustomerController.Register)
+	auth.Post("/login", c.AuthController.LoginClientWithEmail)
 }
 
 func (c *RouteConfig) SetupCMSRoute() {

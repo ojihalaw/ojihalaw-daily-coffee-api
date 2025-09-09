@@ -20,24 +20,26 @@ import (
 )
 
 type AuthUseCase struct {
-	DB        *gorm.DB
-	Log       *logrus.Logger
-	Validator *utils.Validator
-	JWT       *utils.JWTMaker
-	UserRepo  *repository.UserRepository
-	SessRepo  *repository.RefreshRepository
+	DB           *gorm.DB
+	Log          *logrus.Logger
+	Validator    *utils.Validator
+	JWT          *utils.JWTMaker
+	UserRepo     *repository.UserRepository
+	SessRepo     *repository.RefreshRepository
+	CustomerRepo *repository.CustomerRepository
 }
 
 func NewAuthUseCase(
 	db *gorm.DB, logger *logrus.Logger, validator *utils.Validator, jwt *utils.JWTMaker,
-	userRepository *repository.UserRepository, sessRepository *repository.RefreshRepository) *AuthUseCase {
+	userRepository *repository.UserRepository, sessRepository *repository.RefreshRepository, customerRepo *repository.CustomerRepository) *AuthUseCase {
 	return &AuthUseCase{
-		DB:        db,
-		Log:       logger,
-		Validator: validator,
-		UserRepo:  userRepository,
-		SessRepo:  sessRepository,
-		JWT:       jwt,
+		DB:           db,
+		Log:          logger,
+		Validator:    validator,
+		UserRepo:     userRepository,
+		SessRepo:     sessRepository,
+		CustomerRepo: customerRepo,
+		JWT:          jwt,
 	}
 }
 
@@ -112,5 +114,86 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip
 		RefreshToken:     refresh,
 		AccessExpiresIn:  int64(time.Until(accessExp).Seconds()),
 		RefreshExpiresIn: int64(time.Until(refreshExp).Seconds()),
+	}, nil
+}
+
+func (c *AuthUseCase) ClientLoginWithEmail(ctx context.Context, request *model.LoginRequest, ip, ua string) (*model.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := c.Validator.Validate.Struct(request)
+	if err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+
+			var messages []string
+			for _, e := range validationErrors {
+				messages = append(messages, e.Translate(c.Validator.Translator))
+			}
+			return nil, fmt.Errorf("%w: %s", utils.ErrValidation, strings.Join(messages, ", "))
+		}
+		return nil, fmt.Errorf("%w: %s", utils.ErrValidation, err.Error())
+	}
+
+	user, err := c.CustomerRepo.FindByEmail(c.DB.WithContext(ctx), request.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.Log.Infof("user not found, id=%s", request.Email)
+			return nil, utils.ErrInvalidEmail
+		}
+		c.Log.Warnf("Failed find user from database : %+v", err)
+		return nil, fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)) != nil {
+		return nil, utils.ErrInvalidPassword
+	}
+
+	jti, err := randJTI()
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	// create refresh session
+	sess := &entity.RefreshSession{
+		UserID: user.ID, JTI: jti,
+		ExpiresAt: now.Add(c.JWT.RefreshTTL),
+		IP:        ip,
+		UserAgent: ua,
+	}
+
+	if err := c.SessRepo.Create(c.DB.WithContext(ctx), sess); err != nil {
+		return nil, err
+	}
+
+	access, accessExp, err := c.JWT.NewAccessToken(user.ID.String(), string(user.Role), now)
+	if err != nil {
+		return nil, err
+	}
+
+	refresh, refreshExp, err := c.JWT.NewRefreshToken(user.ID.String(), jti, now)
+	if err != nil {
+		return nil, err
+	}
+
+	userData := &model.UserLoginResponse{
+		ID:          user.ID.String(),
+		Name:        user.Name,
+		UserName:    user.UserName,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Role:        user.Role,
+		Status:      user.Status,
+	}
+
+	tokenData := &model.TokenResponse{
+		AccessToken:      access,
+		RefreshToken:     refresh,
+		AccessExpiresIn:  int64(time.Until(accessExp).Seconds()),
+		RefreshExpiresIn: int64(time.Until(refreshExp).Seconds()),
+	}
+
+	return &model.AuthResponse{
+		UserLoginResponse: *userData,
+		TokenResponse:     *tokenData,
 	}, nil
 }

@@ -36,7 +36,7 @@ func Bootstrap(config *BootstrapConfig) {
 	userController := http.NewUserController(userUseCase, config.Log)
 
 	sessionRepository := repository.NewRefreshRepository(config.Log)
-	authUseCase := usecase.NewAuthUseCase(config.DB, config.Log, config.Validator, config.JWTMaker, userRepository, sessionRepository)
+	authUseCase := usecase.NewAuthUseCase(config.DB, config.Log, config.Validator, config.JWTMaker, userRepository, sessionRepository, customerRepository)
 	authController := http.NewAuthController(authUseCase, config.Log)
 
 	categoryRepository := repository.NewCategoryRepository(config.Log)

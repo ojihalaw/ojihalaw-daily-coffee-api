@@ -28,3 +28,11 @@ func (r *CustomerRepository) ExistsByEmail(db *gorm.DB, email string) (bool, err
 	err := db.Model(&entity.Customer{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
 }
+
+func (r *CustomerRepository) FindByEmail(db *gorm.DB, email string) (*entity.Customer, error) {
+	var u entity.Customer
+	if err := db.Where("email = ?", email).Take(&u).Error; err != nil {
+		return nil, err
+	}
+	return &u, nil
+}

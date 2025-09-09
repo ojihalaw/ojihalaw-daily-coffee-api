@@ -26,6 +26,14 @@ func (c *RouteConfig) SetupGuestRoute() {
 	api := c.App.Group("/api/v1")
 	guest := api.Group("/guest")
 
+	category := guest.Group("/categories")
+	category.Get("", c.CategoryController.FindAll)
+
+	product := guest.Group("/products")
+	product.Get("", c.ProductController.FindAll)
+	product.Get(":id", c.ProductController.FindByID)
+	product.Get("/product/special", c.ProductController.FindSpecialProduct)
+
 	order := guest.Group("/orders")
 	order.Post("", c.OrderController.Create)
 }

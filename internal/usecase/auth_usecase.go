@@ -51,7 +51,7 @@ func randJTI() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip, ua string) (*model.TokenResponse, error) {
+func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip, ua string) (*model.AuthResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -109,11 +109,26 @@ func (c *AuthUseCase) Login(ctx context.Context, request *model.LoginRequest, ip
 		return nil, err
 	}
 
-	return &model.TokenResponse{
+	userData := &model.UserLoginResponse{
+		ID:          user.ID.String(),
+		Name:        user.Name,
+		UserName:    user.UserName,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Role:        string(user.Role),
+		Status:      user.Status,
+	}
+
+	tokenData := &model.TokenResponse{
 		AccessToken:      access,
 		RefreshToken:     refresh,
 		AccessExpiresIn:  int64(time.Until(accessExp).Seconds()),
 		RefreshExpiresIn: int64(time.Until(refreshExp).Seconds()),
+	}
+
+	return &model.AuthResponse{
+		UserLoginResponse: *userData,
+		TokenResponse:     *tokenData,
 	}, nil
 }
 

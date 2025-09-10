@@ -29,3 +29,8 @@ type AuthResponse struct {
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
+
+type RefreshTokenResponse struct {
+	AccessToken     string `json:"access_token"`
+	AccessExpiresIn int64  `json:"access_expires_in"`
+}

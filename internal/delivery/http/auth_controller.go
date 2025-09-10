@@ -95,3 +95,40 @@ func (a *AuthController) LoginClientWithEmail(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).
 		JSON(utils.SuccessResponse(fiber.StatusOK, "Login successfully", token))
 }
+
+func (a *AuthController) RefreshToken(ctx *fiber.Ctx) error {
+	request := new(model.RefreshRequest)
+
+	err := ctx.BodyParser(request)
+	if err != nil {
+		a.Log.Warnf("Failed to parse request body : %+v", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse(fiber.StatusBadRequest, "Failed to parse request body"))
+	}
+
+	token, err := a.UseCase.RefreshToken(ctx.UserContext(), request)
+	if err != nil {
+		a.Log.Warnf("Failed to login : %+v", err)
+
+		switch {
+		case errors.Is(err, utils.ErrValidation):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+		case errors.Is(err, utils.ErrUnauthorized):
+			return ctx.Status(fiber.StatusUnauthorized).
+				JSON(utils.ErrorResponse(fiber.StatusUnauthorized, err.Error()))
+		case errors.Is(err, utils.ErrInvalidPassword):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+		case errors.Is(err, utils.ErrInvalidEmail):
+			return ctx.Status(fiber.StatusBadRequest).
+				JSON(utils.ErrorResponse(fiber.StatusBadRequest, err.Error()))
+
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).
+				JSON(utils.ErrorResponse(fiber.StatusInternalServerError, "internal server error"))
+		}
+	}
+
+	return ctx.Status(fiber.StatusOK).
+		JSON(utils.SuccessResponse(fiber.StatusOK, "refresh successfully", token))
+}

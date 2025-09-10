@@ -45,6 +45,7 @@ func (c *RouteConfig) SetupAuthRoute() {
 	auth := guest.Group("/auth")
 	auth.Post("/register", c.CustomerController.Register)
 	auth.Post("/login", c.AuthController.LoginClientWithEmail)
+	auth.Post("/refresh-toke", c.AuthController.RefreshToken)
 }
 
 func (c *RouteConfig) SetupCMSRoute() {

@@ -212,3 +212,31 @@ func (c *AuthUseCase) ClientLoginWithEmail(ctx context.Context, request *model.L
 		TokenResponse:     *tokenData,
 	}, nil
 }
+
+// usecase/auth_usecase.go
+func (c *AuthUseCase) RefreshToken(ctx context.Context, req *model.RefreshRequest) (*model.RefreshTokenResponse, error) {
+	now := time.Now()
+
+	claims, err := c.JWT.VerifyRefreshToken(req.RefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	// 2. (Opsional) cek apakah refresh token masih valid di DB (pakai JTI)
+	//    misal kalau kamu simpan ke redis atau tabel refresh_token
+	// if !repo.CheckJTI(claims.JTI) {
+	//     return nil, errors.New("refresh token revoked")
+	// }
+
+	// 3. Generate access token baru
+	access, accessExp, err := c.JWT.NewAccessToken(claims.UserID, "user", now) // role bisa dari DB kalau perlu
+	if err != nil {
+		return nil, err
+	}
+
+	// 5. Response
+	return &model.RefreshTokenResponse{
+		AccessToken:     access,
+		AccessExpiresIn: int64(time.Until(accessExp).Seconds()),
+	}, nil
+}

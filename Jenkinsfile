@@ -10,10 +10,15 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/ojihalaw/ojihalaw-daily-coffee-api'
+                checkout([$class: 'GitSCM', 
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: 'https://github.com/ojihalaw/ojihalaw-daily-coffee-api.git']],
+                    extensions: [[$class: 'CleanBeforeCheckout']]
+                ])
             }
         }
-        
+
+
         stage('Build Go App') {
             steps {
                 withCredentials([file(credentialsId: 'daily-coffee-env', variable: 'ENV_FILE')]) {

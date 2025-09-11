@@ -16,7 +16,10 @@ pipeline {
         
         stage('Build Go App') {
             steps {
-                sh 'docker-compose build'
+                withCredentials([file(credentialsId: 'daily-coffee-env', variable: 'ENV_FILE')]) {
+                    sh 'cp $ENV_FILE .env'
+                    sh 'docker-compose build'
+                }
             }
         }
 

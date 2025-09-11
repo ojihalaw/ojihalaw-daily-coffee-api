@@ -13,9 +13,9 @@ func Run(db *gorm.DB, log *logrus.Logger) {
 		&entity.Category{},
 		&entity.Product{},
 		&entity.RefreshSession{},
-		&entity.PaymentLog{},
 		&entity.Order{},
 		&entity.OrderItem{},
+		&entity.PaymentLog{},
 	)
 
 	if err != nil {

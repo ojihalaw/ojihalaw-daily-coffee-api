@@ -8,36 +8,16 @@ pipeline {
     }
 
     stages {
-        stage('Cleanup Workspace') {
-            steps {
-                // Clean workspace before starting
-                deleteDir()
-            }
-        }
-
         stage('Checkout') {
             steps {
-                script {
-                    try {
-                        // Method 1: Using checkout scm (recommended for pipeline jobs)
-                        checkout scm
-                    } catch (Exception e) {
-                        echo "SCM checkout failed, trying explicit git checkout..."
-                        // Method 2: Explicit git checkout
-                        checkout([$class: 'GitSCM', 
-                            branches: [[name: '*/master']],
-                            userRemoteConfigs: [[url: 'https://github.com/ojihalaw/ojihalaw-daily-coffee-api.git']],
-                            extensions: [
-                                [$class: 'CleanBeforeCheckout'],
-                                [$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]
-                            ]
-                        ])
-                    }
-                }
-                
-                // Verify checkout worked
-                sh 'pwd && ls -la'
-                sh 'git status || echo "Not a git repository - that\'s okay for some operations"'
+                // Clean workspace and checkout code
+                deleteDir()
+                sh '''
+                git clone https://github.com/ojihalaw/ojihalaw-daily-coffee-api.git .
+                git checkout master
+                echo "Repository cloned successfully"
+                ls -la
+                '''
             }
         }
 
@@ -47,10 +27,8 @@ pipeline {
                 echo "Current directory: $(pwd)"
                 echo "Directory contents:"
                 ls -la
-                echo "Docker version:"
-                docker --version
-                echo "Docker Compose version:"
-                docker compose --version || docker compose version
+                echo "Checking for docker-compose.yml:"
+                test -f docker-compose.yml && echo "docker-compose.yml found" || echo "docker-compose.yml NOT found"
                 '''
             }
         }
@@ -60,16 +38,10 @@ pipeline {
                 withCredentials([file(credentialsId: 'daily-coffee-env', variable: 'ENV_FILE')]) {
                     sh '''
                     echo "Copying environment file..."
-                    cp $ENV_FILE .env
-                    
-                    echo "Checking if docker-compose.yml exists..."
-                    if [ ! -f docker-compose.yml ]; then
-                        echo "docker-compose.yml not found!"
-                        exit 1
-                    fi
+                    cp "$ENV_FILE" .env
                     
                     echo "Building with Docker Compose..."
-                    docker-compose build
+                    docker compose build
                     '''
                 }
             }
@@ -79,7 +51,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Stopping existing containers..."
-                docker compose down --remove-orphans
+                docker compose down --remove-orphans || true
                 
                 echo "Starting new containers..."
                 docker compose up -d
@@ -89,38 +61,16 @@ pipeline {
                 '''
             }
         }
-
-        stage('Health Check') {
-            steps {
-                script {
-                    // Wait for the application to start
-                    sleep(time: 30, unit: 'SECONDS')
-                    
-                    // Add your health check here
-                    sh '''
-                    echo "Performing health check..."
-                    docker-compose ps
-                    
-                    # Uncomment and modify the following line for HTTP health check
-                    # curl -f http://localhost:8080/health || exit 1
-                    '''
-                }
-            }
-        }
     }
 
     post {
         always {
-            echo 'Pipeline completed!'
-            // Clean up if needed
-            sh 'docker system prune -f --volumes || true'
-        }
-        success {
-            echo 'Pipeline succeeded!'
+            echo 'Cleaning up...'
+            sh 'docker system prune -f || true'
         }
         failure {
-            echo 'Pipeline failed!'
-            sh 'docker-compose logs || true'
+            echo 'Build failed! Checking logs...'
+            sh 'docker compose logs || true'
         }
     }
 }

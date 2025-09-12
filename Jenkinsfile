@@ -40,8 +40,19 @@ pipeline {
                     echo "Copying environment file..."
                     cp "$ENV_FILE" .env
                     
+                    echo "Checking Docker installation..."
+                    which docker || echo "Docker not found in PATH"
+                    docker --version || echo "Docker command failed"
+                    
+                    echo "Checking Docker Compose installation..."
+                    which docker-compose || echo "docker-compose not found"
+                    docker-compose --version || echo "docker-compose command failed"
+                    
+                    echo "Checking if Docker daemon is accessible..."
+                    docker info || echo "Cannot connect to Docker daemon"
+                    
                     echo "Building with Docker Compose..."
-                    docker compose build
+                    docker-compose build
                     '''
                 }
             }
@@ -51,13 +62,13 @@ pipeline {
             steps {
                 sh '''
                 echo "Stopping existing containers..."
-                docker compose down --remove-orphans || true
+                docker-compose down --remove-orphans || true
                 
                 echo "Starting new containers..."
-                docker compose up -d
+                docker-compose up -d
                 
                 echo "Checking container status..."
-                docker compose ps
+                docker-compose ps
                 '''
             }
         }
@@ -70,7 +81,7 @@ pipeline {
         }
         failure {
             echo 'Build failed! Checking logs...'
-            sh 'docker compose logs || true'
+            sh 'docker-compose logs || true'
         }
     }
 }

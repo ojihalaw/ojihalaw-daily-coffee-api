@@ -4,11 +4,13 @@ import (
 	"strings"
 
 	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Repository[T any] struct {
-	DB *gorm.DB
+	DB          *gorm.DB
+	RedisClient *redis.Client
 }
 
 func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {

@@ -19,18 +19,20 @@ func main() {
 	cloudinary := config.NewCloudinary(viperConfig)
 	midClient := config.NewMidtransClient(viperConfig)
 	midtransService := service.NewMidtransService(midClient)
+	redisClient := config.NewRedisClient(viperConfig, log)
 
 	migration.Run(db, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:         db,
-		App:        app,
-		Log:        log,
-		Validator:  validator,
-		Config:     viperConfig,
-		JWTMaker:   jwtMaker,
-		Cloudinary: cloudinary,
-		Midtrans:   midtransService,
+		DB:          db,
+		App:         app,
+		Log:         log,
+		Validator:   validator,
+		Config:      viperConfig,
+		JWTMaker:    jwtMaker,
+		Cloudinary:  cloudinary,
+		Midtrans:    midtransService,
+		RedisClient: redisClient,
 	})
 
 	webPort := viperConfig.GetInt("APP_PORT")

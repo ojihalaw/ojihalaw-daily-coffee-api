@@ -10,20 +10,22 @@ import (
 	"github.com/ojihalawa/daily-coffee-api.git/internal/service"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/usecase"
 	"github.com/ojihalawa/daily-coffee-api.git/internal/utils"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
 type BootstrapConfig struct {
-	DB         *gorm.DB
-	App        *fiber.App
-	Log        *logrus.Logger
-	Validator  *utils.Validator
-	Config     *viper.Viper
-	JWTMaker   *utils.JWTMaker
-	Cloudinary *cloudinary.Cloudinary
-	Midtrans   *service.MidtransService
+	DB          *gorm.DB
+	App         *fiber.App
+	Log         *logrus.Logger
+	Validator   *utils.Validator
+	Config      *viper.Viper
+	JWTMaker    *utils.JWTMaker
+	Cloudinary  *cloudinary.Cloudinary
+	Midtrans    *service.MidtransService
+	RedisClient *redis.Client
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -43,7 +45,7 @@ func Bootstrap(config *BootstrapConfig) {
 	categoryUseCase := usecase.NewCategoryUseCase(config.DB, config.Log, config.Validator, categoryRepository)
 	categoryController := http.NewCategoryController(categoryUseCase, config.Log)
 
-	productRepository := repository.NewProductRepository(config.Log)
+	productRepository := repository.NewProductRepository(config.Log, config.RedisClient)
 	productUseCase := usecase.NewProductUseCase(config.DB, config.Log, config.Validator, config.Cloudinary, productRepository)
 	productController := http.NewProductController(productUseCase, config.Log)
 

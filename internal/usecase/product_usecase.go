@@ -104,7 +104,7 @@ func (p *ProductUseCase) FindAll(ctx context.Context, pagination *utils.Paginati
 
 	var products []entity.Product
 
-	total, err := p.ProductRepository.FindAll(p.DB.WithContext(ctx), &products, pagination)
+	total, err := p.ProductRepository.FindAllWithRedis(p.DB.WithContext(ctx), &products, pagination)
 	if err != nil {
 		p.Log.Warnf("Failed find all category from database : %+v", err)
 		return nil, nil, fmt.Errorf("%w: %s", utils.ErrInternal, err.Error())
